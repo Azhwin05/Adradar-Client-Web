@@ -557,6 +557,7 @@
       justify-content: center;
       user-select: none;
     }
+
     /* Radio input covers the full button — invisible but clickable */
     .scale-btn input[type="radio"] {
       position: absolute;
@@ -568,15 +569,18 @@
       margin: 0;
       z-index: 1;
     }
+
     .scale-btn span {
       position: relative;
       z-index: 2;
       pointer-events: none;
     }
+
     .scale-btn:hover {
       border-color: var(--border2);
       color: var(--white);
     }
+
     /* Pure CSS selected state — no JS needed */
     .scale-btn:has(input[type="radio"]:checked) {
       background: var(--accent);
@@ -1748,11 +1752,16 @@
         <div id="scaleRows">
           <div class="scale-row"><span class="scale-label">Number of simultaneous active ads</span>
             <div class="scale-buttons" data-name="score_simultaneous_ads">
-              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads" value="1"><span>1</span></label>
-              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads" value="2"><span>2</span></label>
-              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads" value="3"><span>3</span></label>
-              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads" value="4"><span>4</span></label>
-              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads" value="5"><span>5</span></label>
+              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads"
+                  value="1"><span>1</span></label>
+              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads"
+                  value="2"><span>2</span></label>
+              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads"
+                  value="3"><span>3</span></label>
+              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads"
+                  value="4"><span>4</span></label>
+              <label class="scale-btn"><input type="radio" name="score_simultaneous_ads"
+                  value="5"><span>5</span></label>
             </div>
           </div>
           <div class="scale-row"><span class="scale-label">Days running the same creative</span>
@@ -2026,8 +2035,8 @@
     console.log("ADRADAR script loading...");
 
     // -- CONFIG --
-    const SUPABASE_URL = 'PASTE_YOUR_SUPABASE_URL_HERE';
-    const SUPABASE_ANON_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
+    const SUPABASE_URL = 'https://jjkcidwjdzdcwzqqiukx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impqa2NpZHdqZHpkY3d6cXFpdWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyOTcxNDEsImV4cCI6MjA4ODg3MzE0MX0.JixQSreTkLgyvC1D9INDUl5cfzybYs_gOjG8EbF8Th4';
 
     let supabase = null;
     if (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('PASTE') === -1) {
