@@ -8,9 +8,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
-  <!-- REMOVED XLSX -->
-  <!-- SUPABASE CLIENT -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- No external JS dependencies — Supabase via direct fetch -->
   <style>
     :root {
       --bg: #050505;
@@ -2038,11 +2036,7 @@
     const SUPABASE_URL = 'https://jjkcidwjdzdcwzqqiukx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impqa2NpZHdqZHpkY3d6cXFpdWt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyOTcxNDEsImV4cCI6MjA4ODg3MzE0MX0.JixQSreTkLgyvC1D9INDUl5cfzybYs_gOjG8EbF8Th4';
 
-    let supabase = null;
-    if (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('PASTE') === -1) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log("Supabase initialized");
-    }
+    // No SDK needed — we use fetch directly against the REST API
 
     // -- UTILS --
     function showToast(msg) {
@@ -2131,34 +2125,40 @@
       }
     }
 
-    // -- SUBMISSION --
+    // -- SUBMISSION (direct fetch — no SDK needed) --
     async function submitToSupabase() {
-      console.log("Submission start");
       const btn = document.getElementById('submitBtn');
       const data = collectData();
 
-      if (!supabase) {
-        alert('Supabase client not initialized. Check your URL/Key.');
-        return;
-      }
-
       if (!data.contact_name || !data.contact_email) {
-        showToast('Name and Email are required');
+        showToast('Please fill in your name and email first');
         return;
       }
 
       btn.classList.add('btn-loading');
       try {
-        const { error } = await supabase.from('submissions').insert([data]);
-        if (error) throw error;
-        showToast('SUCCESS: Submitted');
-        setTimeout(() => {
-          btn.classList.remove('btn-loading');
-          const modal = document.getElementById('successOverlay');
-          if (modal) modal.classList.add('show');
-        }, 800);
+        const res = await fetch(SUPABASE_URL + '/rest/v1/submissions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+          const errBody = await res.text();
+          throw new Error(errBody || res.statusText);
+        }
+
+        btn.classList.remove('btn-loading');
+        const modal = document.getElementById('successOverlay');
+        if (modal) modal.classList.add('show');
+
       } catch (err) {
-        console.error("Submit error:", err);
+        console.error('Submit error:', err);
         btn.classList.remove('btn-loading');
         showToast('ERROR: ' + err.message);
       }
