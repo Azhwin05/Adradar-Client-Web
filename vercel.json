@@ -1,0 +1,10 @@
+{
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": ".",
+  "routes": [
+    { "src": "/", "dest": "/ADRADAR.html" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}

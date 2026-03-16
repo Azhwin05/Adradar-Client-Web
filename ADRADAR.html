@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdRadar     Client Intelligence | ClickFieldAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- REMOVED XLSX -->
+<!-- SUPABASE CLIENT -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg:        #050505;
+    --bg2:       #0a0a0a;
+    --bg3:       #111111;
+    --bg4:       #181818;
+    --border:    rgba(255,255,255,0.06);
+    --border2:   rgba(255,255,255,0.12);
+    --accent:    #d1ff00;
+    --accent2:   #b8e600;
+    --accentDim: rgba(209,255,0,0.06);
+    --accentGlow:rgba(209,255,0,0.12);
+    --white:     #ffffff;
+    --gray1:     #b0b0b0;
+    --gray2:     #707070;
+    --gray3:     #3a3a3a;
+    --red:       #ff4d4d;
+    --font-display: 'Syne', sans-serif;
+    --font-body:    'DM Sans', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /*        NOISE TEXTURE OVERLAY        */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /*        HEADER        */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(5,5,5,0.7);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 clamp(20px, 5vw, 48px);
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 20px var(--accentGlow);
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.5px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .progress-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--gray2);
+    letter-spacing: 0.5px;
+  }
+  .progress-bar-wrap {
+    width: 120px;
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /*        HERO        */
+  .hero {
+    position: relative;
+    padding: clamp(120px, 15vh, 200px) clamp(20px, 5vw, 48px) 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    opacity: 0.8;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 8vw, 92px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -4px;
+    color: var(--white);
+    margin-bottom: 32px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    background: linear-gradient(180deg, var(--accent) 40%, var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 19px);
+    color: var(--gray1);
+    max-width: 600px;
+    line-height: 1.6;
+    margin-bottom: 56px;
+    font-weight: 300;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 48px;
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 64px;
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 4px; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--gray2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: var(--font-mono);
+  }
+
+  /*        SECTION NAV        */
+  .section-nav {
+    position: sticky;
+    top: 64px;
+    z-index: 50;
+    background: rgba(8,8,8,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .section-nav::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 16px 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gray2);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+  .nav-tab:hover { color: var(--gray1); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /*        MAIN CONTENT        */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 64px 48px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /*        FORM SECTIONS        */
+  .form-section {
+    margin-bottom: 80px;
+    scroll-margin-top: 130px;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: var(--font-display);
+    font-size: 72px;
+    font-weight: 800;
+    color: var(--border2);
+    line-height: 1;
+    letter-spacing: -3px;
+    min-width: 80px;
+    user-select: none;
+  }
+
+  .section-meta { flex: 1; padding-top: 8px; }
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .section-desc {
+    font-size: 14px;
+    color: var(--gray1);
+    font-weight: 300;
+  }
+
+  /*        QUESTION GROUPS        */
+  .q-group {
+    margin-bottom: 40px;
+  }
+
+  .q-label {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+  }
+
+  .q-hint {
+    font-size: 13px;
+    color: var(--gray2);
+    margin-bottom: 16px;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  /*        CHECKBOX GRID        */
+  .check-grid {
+    display: grid;
+    gap: 10px;
+  }
+  .check-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .check-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .check-grid.cols-1 { grid-template-columns: 1fr; }
+
+  .check-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .check-item:hover {
+    border-color: var(--border2);
+    background: var(--bg3);
+  }
+  /* The real checkbox covers the whole label — invisible but fully clickable */
+  .check-item input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    z-index: 1;
+  }
+  /* Visual box sits above the invisible checkbox overlay */
+  .check-box {
+    position: relative;
+    z-index: 2;
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border2);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    pointer-events: none;
+  }
+  .check-text {
+    position: relative;
+    z-index: 2;
+    font-size: 14px;
+    color: var(--gray1);
+    flex: 1;
+    transition: color 0.15s;
+    pointer-events: none;
+  }
+  .check-box svg { width: 10px; height: 10px; display: none; }
+
+  /* Pure CSS checked states — no JS class needed */
+  .check-item:has(input[type="checkbox"]:checked) {
+    background: var(--accentDim);
+    border-color: var(--accent);
+  }
+  .check-item input[type="checkbox"]:checked ~ .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-item input[type="checkbox"]:checked ~ .check-box svg { display: block; }
+  .check-item input[type="checkbox"]:checked ~ .check-text { color: var(--white); }
+
+  /*        TEXT INPUTS        */
+  .text-input,
+  .textarea-input,
+  select.select-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+    appearance: none;
+  }
+  .text-input:focus,
+  .textarea-input:focus,
+  select.select-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accentDim);
+  }
+  .text-input::placeholder,
+  .textarea-input::placeholder { color: var(--gray3); }
+  .textarea-input { min-height: 100px; line-height: 1.6; }
+
+  /*        INLINE LABEL INPUT        */
+  .labeled-input {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .labeled-input label {
+    font-size: 13px;
+    color: var(--gray1);
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+  }
+
+  /*        SCALE RATING        */
+  .scale-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .scale-row:last-child { border-bottom: none; }
+  .scale-label { font-size: 14px; color: var(--gray1); }
+  .scale-buttons { display: flex; gap: 6px; }
+  .scale-btn {
+    width: 36px; height: 36px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--gray2);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .scale-btn:hover { border-color: var(--border2); color: var(--white); }
+  .scale-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+
+  /*        CLIENT TABLE        */
+  .client-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .client-table th {
+    background: var(--bg3);
+    padding: 12px 14px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray2);
+    border-bottom: 1px solid var(--border);
+  }
+  .client-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .client-table tr:last-child td { border-bottom: none; }
+  .client-table input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    padding: 6px 8px;
+  }
+  .client-table input::placeholder { color: var(--gray3); }
+  .client-table input:focus { background: var(--accentDim); border-radius: 4px; }
+
+  /*        CALLOUT        */
+  .callout {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    margin-bottom: 32px;
+  }
+  .callout-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .callout-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .callout-body { font-size: 13px; color: var(--gray1); line-height: 1.6; }
+
+  /*        DIVIDER        */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 40px 0;
+  }
+
+  /*        SUBMIT ZONE        */
+  .submit-zone {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px;
+    text-align: center;
+    margin-top: 80px;
+  }
+  .submit-title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .submit-sub {
+    font-size: 15px;
+    color: var(--gray1);
+    margin-bottom: 36px;
+    font-weight: 300;
+  }
+  .submit-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: -0.3px;
+  }
+  .btn-primary:hover {
+    background: var(--accent2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--accentGlow);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    background: transparent;
+    color: var(--gray1);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: var(--gray2);
+    color: var(--white);
+  }
+
+  /*        SUCCESS TOAST        */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--accent);
+    color: #000;
+    padding: 16px 24px;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /*        FIELD ERROR        */
+  .field-error {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    display: none;
+  }
+  .field-error.show { display: block; }
+
+  /*        RESPONSIVE        */
+  @media (max-width: 768px) {
+    header { padding: 0 20px; }
+    .hero { padding: 120px 20px 48px; }
+    .hero-stats { gap: 24px; flex-wrap: wrap; }
+    .section-nav { padding: 0 20px; }
+    .main { padding: 48px 20px 80px; }
+    .check-grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
+    .check-grid.cols-2 { grid-template-columns: 1fr; }
+    .labeled-input { grid-template-columns: 1fr; }
+    .scale-row { grid-template-columns: 1fr; gap: 12px; }
+    .submit-zone { padding: 32px 20px; }
+    .section-num { font-size: 48px; min-width: 56px; }
+    .client-table { display: block; overflow-x: auto; }
+    .header-right { display: none; }
+  }
+
+  /*        ANIMATIONS        */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .form-section { animation: fadeUp 0.5s ease both; }
+
+  /*        SUCCESS MODAL        */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5,5,5,0.9);
+    backdrop-filter: blur(30px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .success-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .success-card {
+    text-align: center;
+    max-width: 480px;
+    padding: 64px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    transform: scale(0.9) translateY(40px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .success-overlay.show .success-card {
+    transform: scale(1) translateY(0);
+  }
+  
+  .checkmark-svg {
+    width: 100px; height: 100px;
+    margin: 0 auto 40px;
+  }
+  .checkmark-circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke: var(--accent);
+    fill: none;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  }
+  .checkmark-check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    stroke-width: 3;
+    stroke: var(--accent);
+    fill: none;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+  }
+
+  @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+
+  .success-title {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 5vw, 42px);
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 16px;
+    letter-spacing: -1.5px;
+  }
+  .success-text {
+    font-size: 16px;
+    color: var(--gray1);
+    margin-bottom: 40px;
+    line-height: 1.7;
+  }
+
+  /*        LOADING STATE        */
+  .btn-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+  }
+  .btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    top: calc(50% - 10px);
+    left: calc(50% - 10px);
+    border: 2px solid #000;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
+  }
+  @keyframes btn-spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="#" class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M3 10L8 5L13 10L8 15L3 10Z" fill="#000"/>
+        <path d="M10 4L17 11L10 18" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="logo-text">ClickField<span>AI</span></span>
+  </a>
+  <div class="header-right">
+    <span class="progress-label">COMPLETION</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-label" id="progressPct">0%</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">AdRadar Intelligence System</div>
+  <h1>Find your <em>perfect</em><br>leads. Daily.</h1>
+  <p class="hero-sub">Complete this questionnaire once. AdRadar uses your answers to score and deliver hyper-relevant leads to your inbox every morning     automatically.</p>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <span class="stat-num">8</span>
+      <span class="stat-label">Sections</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">~12</span>
+      <span class="stat-label">Minutes</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">50+</span>
+      <span class="stat-label">Leads / Day</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">5</span>
+      <span class="stat-label">Scoring Signals</span>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION NAV -->
+<nav class="section-nav" id="sectionNav">
+  <button class="nav-tab active" data-target="s1">01    Profile</button>
+  <button class="nav-tab" data-target="s2">02    Ad Spend</button>
+  <button class="nav-tab" data-target="s3">03    Best Clients</button>
+  <button class="nav-tab" data-target="s4">04    Filters</button>
+  <button class="nav-tab" data-target="s5">05    Outreach</button>
+  <button class="nav-tab" data-target="s6">06    Scoring</button>
+  <button class="nav-tab" data-target="s7">07    Readiness</button>
+  <button class="nav-tab" data-target="s8">08    Final</button>
+</nav>
+
+<!-- MAIN FORM -->
+<main class="main">
+<form id="mainForm" novalidate>
+
+  <!--        SECTION 1: ICP        -->
+  <div class="form-section" id="s1">
+    <div class="section-head">
+      <div class="section-num">01</div>
+      <div class="section-meta">
+        <div class="section-tag">Ideal Customer Profile</div>
+        <div class="section-title">Who should we be finding?</div>
+        <div class="section-desc">Define your ideal client so AdRadar knows exactly what to look for</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Your name & company</div>
+      <div class="q-hint">So we know who this submission is from</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <input class="text-input" name="contact_name" placeholder="Full name" required>
+        <input class="text-input" name="contact_company" placeholder="Company / brand name">
+      </div>
+      <input class="text-input" name="contact_email" placeholder="Email address" type="email" style="margin-top:12px" required>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Which industries do you serve best?</div>
+      <div class="q-hint">Select all that apply     we prioritise these in scraping</div>
+      <div class="check-grid cols-3" id="industries">
+        <label class="check-item"><input type="checkbox" name="industry" value="eCommerce / DTC"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">eCommerce / DTC</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Health & Supplements"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Health & Supplements</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Fashion / Apparel"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Fashion / Apparel</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Beauty / Skincare"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Beauty / Skincare</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="SaaS / Software"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">SaaS / Software</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Coaching / Education"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Coaching / Education</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Home & Lifestyle"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Home & Lifestyle</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Sports / Fitness"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Sports / Fitness</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="B2B Services"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">B2B Services</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Food & Beverage"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Food & Beverage</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Finance / Insurance"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Finance / Insurance</span></label>
+        <label class="check-item"><input type="checkbox" name="industry" value="Other"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Other</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Industries to exclude</div>
+      <div class="q-hint">These are filtered out automatically</div>
+      <textarea class="textarea-input" name="industries_exclude" placeholder="e.g. Local restaurants, Political organisations, Adult content..."></textarea>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Target regions</div>
+      <div class="check-grid cols-3">
+        <label class="check-item"><input type="checkbox" name="region" value="United Kingdom"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">United Kingdom</span></label>
+        <label class="check-item"><input type="checkbox" name="region" value="United States"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">United States</span></label>
+        <label class="check-item"><input type="checkbox" name="region" value="Canada"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Canada</span></label>
+        <label class="check-item"><input type="checkbox" name="region" value="Australia"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Australia</span></label>
+        <label class="check-item"><input type="checkbox" name="region" value="Europe"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Europe</span></label>
+        <label class="check-item"><input type="checkbox" name="region" value="Global"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Global</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Ideal company size</div>
+      <div class="check-grid cols-2">
+        <label class="check-item"><input type="checkbox" name="company_size" value="1   10 (Solo/Micro)"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">1   10 employees (Solo/Micro)</span></label>
+        <label class="check-item"><input type="checkbox" name="company_size" value="11   50 (Small)"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">11   50 employees (Small)</span></label>
+        <label class="check-item"><input type="checkbox" name="company_size" value="51   200 (Mid)"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">51   200 employees (Mid)</span></label>
+        <label class="check-item"><input type="checkbox" name="company_size" value="200+ (Large)"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">200+ employees (Large)</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Minimum annual revenue target</div>
+      <div class="check-grid cols-3">
+        <label class="check-item"><input type="checkbox" name="revenue" value="  100K     500K"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  100K     500K</span></label>
+        <label class="check-item"><input type="checkbox" name="revenue" value="  500K     1M"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  500K     1M</span></label>
+        <label class="check-item"><input type="checkbox" name="revenue" value="  1M     5M"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  1M     5M</span></label>
+        <label class="check-item"><input type="checkbox" name="revenue" value="  5M     20M"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  5M     20M</span></label>
+        <label class="check-item"><input type="checkbox" name="revenue" value="  20M+"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  20M+</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!--        SECTION 2: AD SPEND        -->
+  <div class="form-section" id="s2">
+    <div class="section-head">
+      <div class="section-num">02</div>
+      <div class="section-meta">
+        <div class="section-tag">Ad Spend Behaviour</div>
+        <div class="section-title">What does their ad account look like?</div>
+        <div class="section-desc">These signals tell AdRadar exactly what a broken account looks like to you</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Minimum monthly ad spend</div>
+      <div class="check-grid cols-3">
+        <label class="check-item"><input type="checkbox" name="min_spend" value="  2K     5K/mo"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  2K     5K / mo</span></label>
+        <label class="check-item"><input type="checkbox" name="min_spend" value="  5K     10K/mo"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  5K     10K / mo</span></label>
+        <label class="check-item"><input type="checkbox" name="min_spend" value="  10K     30K/mo"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  10K     30K / mo</span></label>
+        <label class="check-item"><input type="checkbox" name="min_spend" value="  30K     100K/mo"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  30K     100K / mo</span></label>
+        <label class="check-item"><input type="checkbox" name="min_spend" value="  100K+/mo"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  100K+ / mo</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Platforms they should be spending on</div>
+      <div class="check-grid cols-3">
+        <label class="check-item"><input type="checkbox" name="platform" value="Google Ads (Search)"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Google Ads (Search)</span></label>
+        <label class="check-item"><input type="checkbox" name="platform" value="Google Shopping / PMax"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Google Shopping / PMax</span></label>
+        <label class="check-item"><input type="checkbox" name="platform" value="Meta / Facebook Ads"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Meta / Facebook Ads</span></label>
+        <label class="check-item"><input type="checkbox" name="platform" value="TikTok Ads"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">TikTok Ads</span></label>
+        <label class="check-item"><input type="checkbox" name="platform" value="LinkedIn Ads"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">LinkedIn Ads</span></label>
+        <label class="check-item"><input type="checkbox" name="platform" value="Microsoft / Bing Ads"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Microsoft / Bing Ads</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">What ad behaviour signals a broken account to you?</div>
+      <div class="check-grid cols-1">
+        <label class="check-item"><input type="checkbox" name="signal" value="Running same ads 60+ days no refresh"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Running same ads 60+ days with no creative refresh</span></label>
+        <label class="check-item"><input type="checkbox" name="signal" value="10+ simultaneous ads no clear winner"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Running 10+ ads simultaneously with no clear winner</span></label>
+        <label class="check-item"><input type="checkbox" name="signal" value="Generic ad copy no offer no CTA"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Generic ad copy &mdash; no offer, no CTA, no proof</span></label>
+        <label class="check-item"><input type="checkbox" name="signal" value="60%+ paid traffic dependency"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">High paid traffic dependency (60%+ paid)</span></label>
+        <label class="check-item"><input type="checkbox" name="signal" value="Scaling aggressively"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Scaling aggressively     needs structure fast</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">What does a broken account look like to you specifically?</div>
+      <div class="q-hint">Your own words     this goes into the scoring logic</div>
+      <textarea class="textarea-input" name="broken_account" placeholder="e.g. Rising CPAs, same creative for months, no split testing, poor landing pages..."></textarea>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Product / service price range your best clients sell at</div>
+      <div class="check-grid cols-3">
+        <label class="check-item"><input type="checkbox" name="price_range" value="  10     50"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  10     50</span></label>
+        <label class="check-item"><input type="checkbox" name="price_range" value="  50     150"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  50     150</span></label>
+        <label class="check-item"><input type="checkbox" name="price_range" value="  150     500"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  150     500</span></label>
+        <label class="check-item"><input type="checkbox" name="price_range" value="  500     2K"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  500     2K</span></label>
+        <label class="check-item"><input type="checkbox" name="price_range" value="  2K+"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">  2K+</span></label>
+        <label class="check-item"><input type="checkbox" name="price_range" value="Subscription/Recurring"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Subscription / Recurring</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!--        SECTION 3: BEST CLIENTS        -->
+  <div class="form-section" id="s3">
+    <div class="section-head">
+      <div class="section-num">03</div>
+      <div class="section-meta">
+        <div class="section-tag">Best Clients</div>
+        <div class="section-title">Help us clone your best clients</div>
+        <div class="section-desc">This is the most important section     the more detail, the better your leads</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">    </div>
+      <div>
+        <div class="callout-title">Why This Matters</div>
+        <div class="callout-body">Your best clients are the template. AdRadar reverse-engineers their profile and finds 50 companies just like them every single morning.</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Your top 5 best clients</div>
+      <div class="q-hint">Website, what they sell, platform, monthly spend, what made them great</div>
+      <table class="client-table">
+        <thead>
+          <tr>
+            <th>Website / Brand</th>
+            <th>Industry</th>
+            <th>Monthly Ad Spend</th>
+            <th>Platform</th>
+            <th>What Made Them Great</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><input name="c1_website" placeholder="e.g. mybrand.com"></td><td><input name="c1_industry" placeholder="e.g. Beauty"></td><td><input name="c1_spend" placeholder="e.g.   15K/mo"></td><td><input name="c1_platform" placeholder="Google / Meta"></td><td><input name="c1_notes" placeholder="High budget, fast decisions..."></td></tr>
+          <tr><td><input name="c2_website" placeholder="e.g. mybrand.com"></td><td><input name="c2_industry" placeholder=""></td><td><input name="c2_spend" placeholder=""></td><td><input name="c2_platform" placeholder=""></td><td><input name="c2_notes" placeholder=""></td></tr>
+          <tr><td><input name="c3_website" placeholder="e.g. mybrand.com"></td><td><input name="c3_industry" placeholder=""></td><td><input name="c3_spend" placeholder=""></td><td><input name="c3_platform" placeholder=""></td><td><input name="c3_notes" placeholder=""></td></tr>
+          <tr><td><input name="c4_website" placeholder="e.g. mybrand.com"></td><td><input name="c4_industry" placeholder=""></td><td><input name="c4_spend" placeholder=""></td><td><input name="c4_platform" placeholder=""></td><td><input name="c4_notes" placeholder=""></td></tr>
+          <tr><td><input name="c5_website" placeholder="e.g. mybrand.com"></td><td><input name="c5_industry" placeholder=""></td><td><input name="c5_spend" placeholder=""></td><td><input name="c5_platform" placeholder=""></td><td><input name="c5_notes" placeholder=""></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">What made those clients easy to work with?</div>
+      <div class="check-grid cols-1">
+        <label class="check-item"><input type="checkbox" name="client_trait" value="High ad budget     room to grow"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">High ad budget     room to grow</span></label>
+        <label class="check-item"><input type="checkbox" name="client_trait" value="Poor tracking before we started"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Poor tracking / attribution before we started</span></label>
+        <label class="check-item"><input type="checkbox" name="client_trait" value="Founder making decisions     fast approvals"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Founder making decisions     fast approvals</span></label>
+        <label class="check-item"><input type="checkbox" name="client_trait" value="Clear ROAS problem they couldn't fix"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Clear ROAS problem they couldn't fix themselves</span></label>
+        <label class="check-item"><input type="checkbox" name="client_trait" value="Scaling phase     needed structure fast"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Scaling phase     needed structure fast</span></label>
+        <label class="check-item"><input type="checkbox" name="client_trait" value="High product margins"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">High product margins     could afford to test</span></label>
+        <label class="check-item"><input type="checkbox" name="client_trait" value="No agency managing ads before"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">No agency managing their ads before us</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">What problem did all your best clients share?</div>
+      <textarea class="textarea-input" name="client_problem" placeholder="e.g. Rising CAC, poor ROAS, no creative strategy, wasted spend, couldn't scale..."></textarea>
+    </div>
+  </div>
+
+  <!--        SECTION 4: FILTERS        -->
+  <div class="form-section" id="s4">
+    <div class="section-head">
+      <div class="section-num">04</div>
+      <div class="section-meta">
+        <div class="section-tag">Disqualification Filters</div>
+        <div class="section-title">Who should we never send you?</div>
+        <div class="section-desc">Saves your time     these companies are filtered out before they reach you</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Never send me these types of companies</div>
+      <div class="check-grid cols-1">
+        <label class="check-item"><input type="checkbox" name="disqualify" value="Startups with no revenue yet"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Startups with no revenue yet</span></label>
+        <label class="check-item"><input type="checkbox" name="disqualify" value="Spending under   2K/month on ads"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Companies spending under   2K/month on ads</span></label>
+        <label class="check-item"><input type="checkbox" name="disqualify" value="Other marketing agencies"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Other marketing agencies</span></label>
+        <label class="check-item"><input type="checkbox" name="disqualify" value="Dropshipping stores"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Dropshipping stores</span></label>
+        <label class="check-item"><input type="checkbox" name="disqualify" value="Local single-location businesses"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Local / single-location businesses</span></label>
+        <label class="check-item"><input type="checkbox" name="disqualify" value="200+ employees     own in-house team"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">200+ employees     they have their own team</span></label>
+        <label class="check-item"><input type="checkbox" name="disqualify" value="Already working with a large agency"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Companies already with a large agency</span></label>
+        <label class="check-item"><input type="checkbox" name="disqualify" value="Non-eCommerce     no online store"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Non-eCommerce / no online store</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Absolute minimum requirements</div>
+      <div class="q-hint">These become hard filters     any lead below these thresholds is automatically excluded</div>
+      <div class="labeled-input"><label>Min. monthly ad spend</label><input class="text-input" name="min_spend_hard" placeholder="e.g.   3,000/mo"></div>
+      <div class="labeled-input"><label>Min. monthly website traffic</label><input class="text-input" name="min_traffic" placeholder="e.g. 5,000 visits/mo"></div>
+      <div class="labeled-input"><label>Min. annual revenue</label><input class="text-input" name="min_revenue" placeholder="e.g.   500K/year"></div>
+      <div class="labeled-input"><label>Must have</label><input class="text-input" name="must_have" placeholder="e.g. Active website, tracking pixel, eCommerce store"></div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Any other instant disqualifiers?</div>
+      <textarea class="textarea-input" name="other_dq" placeholder="Anything that would make you immediately skip a lead..."></textarea>
+    </div>
+  </div>
+
+  <!--        SECTION 5: OUTREACH        -->
+  <div class="form-section" id="s5">
+    <div class="section-head">
+      <div class="section-num">05</div>
+      <div class="section-meta">
+        <div class="section-tag">Outreach & Personalisation</div>
+        <div class="section-title">How should we write your emails?</div>
+        <div class="section-desc">AdRadar writes every email to sound exactly like you</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Who is the right decision maker to target?</div>
+      <div class="check-grid cols-2">
+        <label class="check-item"><input type="checkbox" name="decision_maker" value="Founder / CEO"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Founder / CEO</span></label>
+        <label class="check-item"><input type="checkbox" name="decision_maker" value="CMO / Head of Marketing"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">CMO / Head of Marketing</span></label>
+        <label class="check-item"><input type="checkbox" name="decision_maker" value="Head of Growth"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Head of Growth</span></label>
+        <label class="check-item"><input type="checkbox" name="decision_maker" value="Performance Marketing Manager"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Performance Marketing Manager</span></label>
+        <label class="check-item"><input type="checkbox" name="decision_maker" value="eCommerce Director"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">eCommerce Director</span></label>
+        <label class="check-item"><input type="checkbox" name="decision_maker" value="Depends on company size"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Depends on company size</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">What results do you typically deliver?</div>
+      <div class="q-hint">These go directly into your email copy</div>
+      <div class="check-grid cols-2">
+        <label class="check-item"><input type="checkbox" name="results" value="Increase ROAS"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Increase ROAS</span></label>
+        <label class="check-item"><input type="checkbox" name="results" value="Reduce Cost Per Acquisition"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Reduce Cost Per Acquisition</span></label>
+        <label class="check-item"><input type="checkbox" name="results" value="Cut wasted ad spend"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Cut wasted ad spend</span></label>
+        <label class="check-item"><input type="checkbox" name="results" value="Fix tracking and attribution"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Fix tracking & attribution</span></label>
+        <label class="check-item"><input type="checkbox" name="results" value="Scale profitable campaigns"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Scale profitable campaigns</span></label>
+        <label class="check-item"><input type="checkbox" name="results" value="Build full account structure"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Build full account structure</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Your unique advantage</div>
+      <div class="q-hint">What do you do better than any other consultant or agency?</div>
+      <textarea class="textarea-input" name="unique_advantage" placeholder="e.g. 15+ years experience, managed $230M+ in spend, fractional model with no agency fluff..."></textarea>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">A typical result or ROI you deliver</div>
+      <div class="q-hint">Be specific     this is your proof point in every email</div>
+      <input class="text-input" name="typical_roi" placeholder="e.g. Increased ROAS from 1.8x to 4.1x in 8 weeks for a UK fashion brand">
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Email tone</div>
+      <div class="check-grid cols-2">
+        <label class="check-item"><input type="checkbox" name="email_tone" value="Direct and blunt"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Direct and blunt</span></label>
+        <label class="check-item"><input type="checkbox" name="email_tone" value="Consultative and helpful"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Consultative and helpful</span></label>
+        <label class="check-item"><input type="checkbox" name="email_tone" value="Data-led and analytical"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Data-led and analytical</span></label>
+        <label class="check-item"><input type="checkbox" name="email_tone" value="Casual and conversational"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Casual and conversational</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!--        SECTION 6: SCORING        -->
+  <div class="form-section" id="s6">
+    <div class="section-head">
+      <div class="section-num">06</div>
+      <div class="section-meta">
+        <div class="section-tag">Lead Scoring Priorities</div>
+        <div class="section-title">What matters most to you?</div>
+        <div class="section-desc">Rate 1   5. AdRadar weights your leads accordingly so the best ones land first</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">   </div>
+      <div>
+        <div class="callout-title">How Scoring Works</div>
+        <div class="callout-body">Rate each signal 1 to 5. Score 5 = critical to you. AdRadar multiplies each signal by your weight     your most important signals always push leads to the top.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--gray2)">1 = Not Important &nbsp;&nbsp; 5 = Critical</span>
+    </div>
+
+    <div id="scaleRows">
+      <div class="scale-row"><span class="scale-label">Number of simultaneous active ads</span><div class="scale-buttons" data-name="score_simultaneous_ads">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Days running the same creative</span><div class="scale-buttons" data-name="score_creative_age">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Ad copy quality (generic vs specific)</span><div class="scale-buttons" data-name="score_copy_quality">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Paid traffic dependency (%)</span><div class="scale-buttons" data-name="score_paid_dependency">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Company / team size</span><div class="scale-buttons" data-name="score_team_size">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Estimated monthly ad spend</span><div class="scale-buttons" data-name="score_ad_spend">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Website traffic volume</span><div class="scale-buttons" data-name="score_traffic">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Product price point / ticket size</span><div class="scale-buttons" data-name="score_ticket">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">No current agency (direct access)</span><div class="scale-buttons" data-name="score_no_agency">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+      <div class="scale-row"><span class="scale-label">Founder-led     decision maker accessible</span><div class="scale-buttons" data-name="score_founder_led">
+        <button type="button" class="scale-btn" data-val="1">1</button><button type="button" class="scale-btn" data-val="2">2</button><button type="button" class="scale-btn" data-val="3">3</button><button type="button" class="scale-btn" data-val="4">4</button><button type="button" class="scale-btn" data-val="5">5</button>
+      </div></div>
+    </div>
+  </div>
+
+  <!--        SECTION 7: READINESS        -->
+  <div class="form-section" id="s7">
+    <div class="section-head">
+      <div class="section-num">07</div>
+      <div class="section-meta">
+        <div class="section-tag">Sales Readiness</div>
+        <div class="section-title">Who is ready to buy right now?</div>
+        <div class="section-desc">Trigger events that push a lead to the top of your inbox</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Prioritise companies that have recently...</div>
+      <div class="check-grid cols-2">
+        <label class="check-item"><input type="checkbox" name="trigger" value="Just launched first ad campaign"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Just launched their first ad campaign</span></label>
+        <label class="check-item"><input type="checkbox" name="trigger" value="Raised funding or investment"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Raised funding or investment</span></label>
+        <label class="check-item"><input type="checkbox" name="trigger" value="Launched a new product or range"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Launched a new product or range</span></label>
+        <label class="check-item"><input type="checkbox" name="trigger" value="Expanded to new market or region"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Expanded to new market or region</span></label>
+        <label class="check-item"><input type="checkbox" name="trigger" value="Started hiring marketing roles"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Started hiring marketing roles</span></label>
+        <label class="check-item"><input type="checkbox" name="trigger" value="No preference     just find the pain"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">No preference     just find the pain</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">How many leads per day?</div>
+      <div class="check-grid cols-2">
+        <label class="check-item"><input type="checkbox" name="lead_volume" value="5   10 leads/day"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">5   10 leads / day</span></label>
+        <label class="check-item"><input type="checkbox" name="lead_volume" value="10   20 leads/day"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">10   20 leads / day</span></label>
+        <label class="check-item"><input type="checkbox" name="lead_volume" value="20   50 leads/day"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">20   50 leads / day</span></label>
+        <label class="check-item"><input type="checkbox" name="lead_volume" value="50+ leads/day"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">50+ leads / day</span></label>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">How fast should AdRadar follow up after finding a lead?</div>
+      <div class="check-grid cols-2">
+        <label class="check-item"><input type="checkbox" name="followup_speed" value="Same day"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Same day</span></label>
+        <label class="check-item"><input type="checkbox" name="followup_speed" value="Within 24 hours"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Within 24 hours</span></label>
+        <label class="check-item"><input type="checkbox" name="followup_speed" value="Within 48 hours"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Within 48 hours</span></label>
+        <label class="check-item"><input type="checkbox" name="followup_speed" value="Weekly batch     I decide timing"><div class="check-box"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="#000" stroke-width="1.5" fill="none"/></svg></div><span class="check-text">Weekly batch     I decide timing</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!--        SECTION 8: FINAL        -->
+  <div class="form-section" id="s8">
+    <div class="section-head">
+      <div class="section-num">08</div>
+      <div class="section-meta">
+        <div class="section-tag">Final Notes</div>
+        <div class="section-title">Anything else we should know?</div>
+        <div class="section-desc">Last details to make your lead feed perfect</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">What should every outreach email include?</div>
+      <div class="q-hint">e.g. your Calendly link, a specific case study, subject line style</div>
+      <textarea class="textarea-input" name="email_must_include" placeholder="e.g. Always include my Calendly link, mention my 15 years experience, reference their specific ad count..."></textarea>
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Competitors to be aware of</div>
+      <div class="q-hint">We won't target their clients</div>
+      <input class="text-input" name="competitors" placeholder="e.g. Agency X, Consultant Y...">
+    </div>
+
+    <div class="q-group">
+      <div class="q-label">Any final notes or preferences?</div>
+      <textarea class="textarea-input" name="final_notes" placeholder="Anything else that would help us deliver better leads for you..."></textarea>
+    </div>
+  </div>
+
+  <!--        SUBMIT ZONE        -->
+  <div class="submit-zone">
+    <div class="submit-title">Ready to go.</div>
+    <div class="submit-sub">We'll configure your AdRadar system within 24 hours. First leads arrive the morning after.</div>
+    <div class="submit-actions">
+      <button type="button" class="btn-primary" id="submitBtn" onclick="submitToSupabase()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 8L9 11L13 5" stroke="#000" stroke-width="1.5" stroke-linecap="round"/><path d="M2 14H14" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Submit Intelligence Profile
+      </button>
+      <button type="button" class="btn-secondary" onclick="saveDraft()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3H11L13 5V13H3V3Z" stroke="currentColor" stroke-width="1.5"/><path d="M6 3V6H10V3" stroke="currentColor" stroke-width="1.5"/><path d="M5 9H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 11H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Save Draft
+      </button>
+    </div>
+  </div>
+
+</form>
+</main>
+
+<!-- SUCCESS MODAL -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <svg class="checkmark-svg" viewBox="0 0 52 52">
+      <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+      <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+    </svg>
+    <h2 class="success-title">Intelligence Secured.</h2>
+    <p class="success-text">Your AdRadar profile has been submitted. Our system is now calibrating. Your first lead batch arrives at 07:00 AM.</p>
+    <button class="btn-primary" onclick="location.reload()">Return to Home</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg width="16" height="16" viewBox="0 0 16 16"><polyline points="2,8 6,12 14,4" stroke="#000" stroke-width="2" fill="none"/></svg>
+  <span id="toastMsg">Submission successful!</span>
+</div>
+
+<script>
+console.log("ADRADAR script loading...");
+
+// -- CONFIG --
+const SUPABASE_URL = 'PASTE_YOUR_SUPABASE_URL_HERE';
+const SUPABASE_ANON_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
+
+let supabase = null;
+if (typeof window.supabase !== 'undefined' && SUPABASE_URL.indexOf('PASTE') === -1) {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log("Supabase initialized");
+}
+
+// -- UTILS --
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  const msgEl = document.getElementById('toastMsg');
+  if (msgEl) msgEl.textContent = msg;
+  if (toast) {
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+}
+
+function updateProgress() {
+  const inputs = document.querySelectorAll('.text-input, .textarea-input');
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+  const scaleGroups = document.querySelectorAll('.scale-buttons');
+
+  let filled = 0, total = 0;
+  inputs.forEach(i => { total++; if (i.value.trim()) filled++; });
+  checkboxes.forEach(c => { total += 0.1; if (c.checked) filled += 0.1; });
+  scaleGroups.forEach(g => { total++; if (g.querySelector('.active')) filled++; });
+
+  const pct = Math.min(100, Math.round((filled / total) * 100)) + '%';
+  const fillEl = document.getElementById('progressFill');
+  const pctEl = document.getElementById('progressPct');
+  if (fillEl) fillEl.style.width = pct;
+  if (pctEl) pctEl.textContent = pct;
+}
+
+function collectData() {
+  const data = {};
+  const form = document.getElementById('mainForm');
+  if (!form) return data;
+
+  form.querySelectorAll('input[type="text"], input[type="email"], textarea').forEach(el => {
+    if (el.name) data[el.name] = el.value.trim();
+  });
+
+  const cbGroups = {};
+  form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    if (!cbGroups[cb.name]) cbGroups[cb.name] = [];
+    if (cb.checked) cbGroups[cb.name].push(cb.value);
+  });
+  Object.entries(cbGroups).forEach(([k, v]) => { data[k] = v.join(', '); });
+
+  form.querySelectorAll('.scale-buttons').forEach(group => {
+    const active = group.querySelector('.active');
+    if (group.dataset.name) data[group.dataset.name] = active ? active.dataset.val : '';
+  });
+
+  return data;
+}
+
+// -- CHECKBOX PROGRESS UPDATE --
+document.addEventListener('change', function(e) {
+  if (e.target.type === 'checkbox') updateProgress();
+});
+
+// -- INTERACTION HANDLER (DELEGATION) --
+document.addEventListener('click', (e) => {
+  // Navigation Tabs
+  const tab = e.target.closest('.nav-tab');
+  if (tab) {
+    const targetId = tab.dataset.target;
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    }
+    return;
+  }
+
+  // Scale Buttons
+  const sBtn = e.target.closest('.scale-btn');
+  if (sBtn) {
+    const group = sBtn.closest('.scale-buttons');
+    group.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+    sBtn.classList.add('active');
+    updateProgress();
+    return;
+  }
+});
+
+// Text inputs
+document.addEventListener('input', (e) => {
+  if (e.target.matches('.text-input, .textarea-input')) {
+    updateProgress();
+  }
+});
+
+// -- DRAFT --
+function saveDraft() {
+  const data = collectData();
+  try {
+    localStorage.setItem('adradar_draft', JSON.stringify(data));
+    showToast('Draft saved locally');
+  } catch (err) {
+    showToast('Could not save draft');
+  }
+}
+
+// -- SUBMISSION --
+async function submitToSupabase() {
+  console.log("Submission start");
+  const btn = document.getElementById('submitBtn');
+  const data = collectData();
+
+  if (!supabase) {
+    alert('Supabase client not initialized. Check your URL/Key.');
+    return;
+  }
+
+  if (!data.contact_name || !data.contact_email) {
+    showToast('Name and Email are required');
+    return;
+  }
+
+  btn.classList.add('btn-loading');
+  try {
+    const { error } = await supabase.from('submissions').insert([data]);
+    if (error) throw error;
+    showToast('SUCCESS: Submitted');
+    setTimeout(() => {
+      btn.classList.remove('btn-loading');
+      const modal = document.getElementById('successOverlay');
+      if (modal) modal.classList.add('show');
+    }, 800);
+  } catch (err) {
+    console.error("Submit error:", err);
+    btn.classList.remove('btn-loading');
+    showToast('ERROR: ' + err.message);
+  }
+}
+
+// -- OBSERVERS --
+if ('IntersectionObserver' in window) {
+  const sections = document.querySelectorAll('.form-section');
+  
+  // Section entrance animations
+  const entranceObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = "1";
+        entry.target.style.transform = "translateY(0)";
+      }
+    });
+  }, { threshold: 0.1 });
+
+  sections.forEach(s => {
+    s.style.opacity = "0";
+    s.style.transform = "translateY(24px)";
+    s.style.transition = "all 0.6s cubic-bezier(0.1, 0, 0, 1)";
+    entranceObserver.observe(s);
+  });
+} else {
+  document.querySelectorAll('.form-section').forEach(s => s.style.opacity = "1");
+}
+
+// Start
+updateProgress();
+console.log("Script fully initialized");
+</script>
+</body>
+</html>
